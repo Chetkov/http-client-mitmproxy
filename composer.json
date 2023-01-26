@@ -12,5 +12,8 @@
             "name": "Valeriy Chetkov",
             "email": "chetkov.valeriy@gmail.com"
         }
-    ]
+    ],
+    "require": {
+        "psr/http-client": "^1.0"
+    }
 }
