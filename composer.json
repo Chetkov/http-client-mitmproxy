@@ -1,0 +1,16 @@
+{
+    "name": "v.chetkov/http-client-mitmproxy",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Chetkov\\HttpClientMitmproxy\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Valeriy Chetkov",
+            "email": "chetkov.valeriy@gmail.com"
+        }
+    ]
+}
