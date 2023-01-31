@@ -21,6 +21,7 @@ use Chetkov\HttpClientMitmproxy\DataTransform\Response\ResponseFormatter;
 use Chetkov\HttpClientMitmproxy\DataTransform\Response\ResponseFormatterInterface;
 use Chetkov\HttpClientMitmproxy\Enum\Format;
 use Chetkov\HttpClientMitmproxy\Exception\NotImplementedException;
+use Chetkov\HttpClientMitmproxy\FileSystem\FileSystemHelper;
 use Chetkov\HttpClientMitmproxy\MITM\DataModifier\DataModifierInterface;
 use Chetkov\HttpClientMitmproxy\MITM\DataModifier\RealtimeDataModifier;
 use Chetkov\HttpClientMitmproxy\MITM\HttpClientMITMDecorator;
@@ -38,6 +39,7 @@ class DefaultRegistry implements RegistryInterface
     private ?RequestFormatter $requestFormatter = null;
     private ?ResponseFormatter $responseFormatter = null;
     private ?ConsoleIOInterface $consoleIO = null;
+    private ?FileSystemHelper $fileSystemHelper = null;
 
     /**
      * @param \Redis $redis
@@ -56,8 +58,7 @@ class DefaultRegistry implements RegistryInterface
         string $proxyUid,
         Format $format,
         ClientInterface $originalClient,
-    ): HttpClientMITMDecorator
-    {
+    ): HttpClientMITMDecorator {
         return new HttpClientMITMDecorator(
             $this->getDataModifier($proxyUid, $format),
             $originalClient,
@@ -171,5 +172,16 @@ class DefaultRegistry implements RegistryInterface
             $this->consoleIO = new SymfonyConsoleIOAdapter(new SymfonyStyle(new ArgvInput(), new ConsoleOutput()));
         }
         return $this->consoleIO;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getFileSystemHelper(): FileSystemHelper
+    {
+        if (!$this->fileSystemHelper) {
+            $this->fileSystemHelper = new FileSystemHelper();
+        }
+        return $this->fileSystemHelper;
     }
 }

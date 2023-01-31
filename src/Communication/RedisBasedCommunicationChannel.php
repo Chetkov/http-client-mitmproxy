@@ -21,6 +21,7 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
         private string $proxyUid,
     ) {
         $this->messageCounter = $this->getLastSharedCounterValue();
+        $this->redis->incr($this->getClientCounterCacheKey());
     }
 
     /**
@@ -28,8 +29,11 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
      */
     public function __destruct()
     {
-        $this->redis->del($this->getMessageCacheKey());
-        $this->redis->del($this->getCounterCacheKey());
+        $otherClients = (int) $this->redis->decr($this->getClientCounterCacheKey());
+        if ($otherClients === 0) {
+            $this->redis->del($this->getMessageCacheKey());
+            $this->redis->del($this->getCounterCacheKey());
+        }
     }
 
     /**
@@ -73,6 +77,26 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
     }
 
     /**
+     * @return int
+     *
+     * @throws \RedisException
+     */
+    private function getLastSharedCounterValue(): int
+    {
+        return (int) $this->redis->get($this->getCounterCacheKey()) ?: 0;
+    }
+
+    /**
+     * @return int
+     *
+     * @throws \RedisException
+     */
+    private function getLastReadCounterValue(): int
+    {
+        return (int) $this->redis->get($this->getLastReadCacheKey()) ?: 0;
+    }
+
+    /**
      * @return string
      */
     private function getMessageCacheKey(): string
@@ -97,22 +121,10 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
     }
 
     /**
-     * @return int
-     *
-     * @throws \RedisException
+     * @return string
      */
-    private function getLastSharedCounterValue(): int
+    private function getClientCounterCacheKey(): string
     {
-        return (int) $this->redis->get($this->getCounterCacheKey()) ?: 0;
-    }
-
-    /**
-     * @return int
-     *
-     * @throws \RedisException
-     */
-    private function getLastReadCounterValue(): int
-    {
-        return (int) $this->redis->get($this->getLastReadCacheKey()) ?: 0;
+        return $this->getMessageCacheKey() . '_clients';
     }
 }

@@ -6,12 +6,12 @@ namespace Chetkov\HttpClientMitmproxy;
 
 use Chetkov\HttpClientMitmproxy\Communication\CommunicationChannelInterface;
 use Chetkov\HttpClientMitmproxy\DataTransform\FormatConverter\FormatConverterInterface;
-use Chetkov\HttpClientMitmproxy\DataTransform\DataExporter;
 use Chetkov\HttpClientMitmproxy\DataTransform\Request\RequestExporterInterface;
-use Chetkov\HttpClientMitmproxy\DataTransform\Response\ResponseExporterInterface;
 use Chetkov\HttpClientMitmproxy\DataTransform\Request\RequestFormatterInterface;
+use Chetkov\HttpClientMitmproxy\DataTransform\Response\ResponseExporterInterface;
 use Chetkov\HttpClientMitmproxy\DataTransform\Response\ResponseFormatterInterface;
 use Chetkov\HttpClientMitmproxy\Enum\Format;
+use Chetkov\HttpClientMitmproxy\FileSystem\FileSystemHelper;
 use Chetkov\HttpClientMitmproxy\MITM\DataModifier\DataModifierInterface;
 use Chetkov\HttpClientMitmproxy\MITM\HttpClientMITMDecorator;
 use Psr\Http\Client\ClientInterface;
@@ -72,4 +72,9 @@ interface RegistryInterface
      * @return ResponseFormatterInterface
      */
     public function getResponseFormatter(): ResponseFormatterInterface;
+
+    /**
+     * @return FileSystemHelper
+     */
+    public function getFileSystemHelper(): FileSystemHelper;
 }

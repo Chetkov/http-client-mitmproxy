@@ -47,3 +47,4 @@ $response = $mitmClient->sendRequest(new Request('GET', 'https://vk.com/?id=153#
 echo $response->getStatusCode() . ' ' . $response->getBody()->getContents() . PHP_EOL . PHP_EOL;
 
 $f = 1;
+die;

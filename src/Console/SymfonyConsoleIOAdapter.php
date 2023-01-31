@@ -21,7 +21,7 @@ class SymfonyConsoleIOAdapter implements ConsoleIOInterface
      */
     public function info(string $message): void
     {
-        $this->console->note($message);
+        $this->console->info($message);
     }
 
     /**

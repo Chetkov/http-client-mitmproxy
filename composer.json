@@ -16,6 +16,7 @@
     ],
     "require": {
         "ext-readline": "*",
+        "ext-pcntl": "*",
         "ext-json": "*",
         "ext-yaml": "*",
         "ext-redis": "*",
