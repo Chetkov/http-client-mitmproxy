@@ -23,5 +23,8 @@
         "psr/http-client": "^1.0",
         "guzzlehttp/guzzle": "^6||^7.5",
         "symfony/console": "^5||^6.2"
-    }
+    },
+    "bin": [
+        "/bin/mitm-proxy"
+    ]
 }
