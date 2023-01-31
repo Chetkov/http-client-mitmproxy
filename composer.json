@@ -5,7 +5,8 @@
     "autoload": {
         "psr-4": {
             "Chetkov\\HttpClientMitmproxy\\": "src/"
-        }
+        },
+        "files": ["constants.php"]
     },
     "authors": [
         {
@@ -14,6 +15,12 @@
         }
     ],
     "require": {
-        "psr/http-client": "^1.0"
+        "ext-readline": "*",
+        "ext-json": "*",
+        "ext-yaml": "*",
+        "ext-redis": "*",
+        "psr/http-client": "^1.0",
+        "guzzlehttp/guzzle": "^7.5",
+        "symfony/console": "^6.2"
     }
 }
