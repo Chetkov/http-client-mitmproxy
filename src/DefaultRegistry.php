@@ -43,9 +43,11 @@ class DefaultRegistry implements RegistryInterface
 
     /**
      * @param \Redis $redis
+     * @param string $storageDir
      */
     public function __construct(
         private \Redis $redis,
+        private string $storageDir = MITM_STORAGE_DIR,
     ) {
     }
 
@@ -137,7 +139,7 @@ class DefaultRegistry implements RegistryInterface
             $this->formatConverters[(string) $format] = match (true) {
                 $format->isYaml() => new YAMLFormatConverter(),
                 $format->isJson() => new JSONFormatConverter(),
-                $format->isPhp() => new PHPFormatConverter(),
+                $format->isPhp() => new PHPFormatConverter($this->storageDir),
                 default => throw new NotImplementedException(),
             };
         }

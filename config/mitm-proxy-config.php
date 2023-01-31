@@ -8,6 +8,6 @@ return [
     'registry_factory' => static function () {
         $redis = new \Redis();
         $redis->connect('localhost');
-        return new DefaultRegistry($redis);
-    }
+        return new DefaultRegistry($redis, MITM_STORAGE_DIR);
+    },
 ];
