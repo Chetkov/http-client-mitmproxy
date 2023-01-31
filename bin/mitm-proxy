@@ -7,7 +7,7 @@ declare(ticks = 1);
 use Chetkov\HttpClientMitmproxy\MITMProxy;
 use Chetkov\HttpClientMitmproxy\RegistryInterface;
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once MITM_ROOT . '/bootstrap.php';
 
 $configPath = $argv[1] ?? MITM_CONFIG_DIR . '/mitm-proxy-config.php';
 $config = require $configPath;
