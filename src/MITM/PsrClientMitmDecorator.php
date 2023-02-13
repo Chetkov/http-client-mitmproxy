@@ -9,7 +9,7 @@ use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
-class HttpClientMITMDecorator implements ClientInterface
+class PsrClientMitmDecorator implements ClientInterface
 {
     /**
      * @param DataModifierInterface $modifier

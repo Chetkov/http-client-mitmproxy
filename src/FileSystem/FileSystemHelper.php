@@ -22,13 +22,13 @@ class FileSystemHelper
     }
 
     /**
-     * @param string $dir
+     * @param string $path
      *
      * @return void
      */
-    public function recursiveRemoveDir(string $dir): void
+    public function recursiveRemoveDir(string $path): void
     {
-        $includes = new FilesystemIterator($dir);
+        $includes = new FilesystemIterator($path);
         foreach ($includes as $include) {
             if (is_dir($include) && !is_link($include)) {
                 $this->recursiveRemoveDir($include);
@@ -37,6 +37,6 @@ class FileSystemHelper
             }
         }
 
-        rmdir($dir);
+        rmdir($path);
     }
 }

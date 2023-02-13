@@ -9,7 +9,3 @@ if (!defined('MITM_ROOT')) {
 if (!defined('MITM_STORAGE_DIR')) {
     define('MITM_STORAGE_DIR', __DIR__ . '/storage');
 }
-
-if (!defined('MITM_CONFIG_DIR')) {
-    define('MITM_CONFIG_DIR', __DIR__ . '/config');
-}

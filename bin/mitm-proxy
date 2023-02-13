@@ -4,22 +4,14 @@
 declare(strict_types=1);
 declare(ticks = 1);
 
-use Chetkov\HttpClientMitmproxy\MITMProxy;
-use Chetkov\HttpClientMitmproxy\RegistryInterface;
+use Chetkov\HttpClientMitmproxy\DefaultRegistryFactory;
 
 require_once dirname(__DIR__) . '/bootstrap.php';
 
-$configPath = $argv[1] ?? MITM_CONFIG_DIR . '/mitm-proxy-config.php';
-$config = require $configPath;
-
-/** @var RegistryInterface $registry */
-$registry = $config['registry_factory']();
-
+$storageDir = $argv[1] ?? MITM_STORAGE_DIR;
 $proxyUid = md5(uniqid((string) getmypid(), true));
 
-(new MITMProxy(
-    $registry->getFileSystemHelper(),
-    $registry->getConsoleIO(),
-    $registry->getCommunicationChannel($proxyUid),
-    $proxyUid,
-))->start();
+(new DefaultRegistryFactory())
+    ->create($storageDir)
+    ->getProxy($proxyUid)
+    ->start();

@@ -24,7 +24,8 @@ use Chetkov\HttpClientMitmproxy\Exception\NotImplementedException;
 use Chetkov\HttpClientMitmproxy\FileSystem\FileSystemHelper;
 use Chetkov\HttpClientMitmproxy\MITM\DataModifier\DataModifierInterface;
 use Chetkov\HttpClientMitmproxy\MITM\DataModifier\RealtimeDataModifier;
-use Chetkov\HttpClientMitmproxy\MITM\HttpClientMITMDecorator;
+use Chetkov\HttpClientMitmproxy\MITM\Proxy;
+use Chetkov\HttpClientMitmproxy\MITM\PsrClientMitmDecorator;
 use Psr\Http\Client\ClientInterface;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -32,6 +33,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class DefaultRegistry implements RegistryInterface
 {
+    private array $MITMProxies = [];
     private array $communicationChannels = [];
     private array $dataModifiers = [];
     private array $dataExporters = [];
@@ -52,16 +54,38 @@ class DefaultRegistry implements RegistryInterface
     }
 
     /**
+     * @param string $proxyUid
+     *
+     * @return Proxy
+     *
+     * @throws \RedisException
+     */
+    public function getProxy(string $proxyUid): Proxy
+    {
+        if (!isset($this->MITMProxies[$proxyUid])) {
+            $this->MITMProxies[$proxyUid] = new Proxy(
+                $this->getFileSystemHelper(),
+                $this->getConsoleIO(),
+                $this->getCommunicationChannel($proxyUid),
+                $proxyUid,
+                $this->storageDir,
+            );
+        }
+
+        return $this->MITMProxies[$proxyUid];
+    }
+
+    /**
      * @inheritDoc
      *
      * @throws \RedisException
      */
-    public function getHttpClientMitmproxyDecorator(
+    public function getDecoratedHttpClient(
         string $proxyUid,
         Format $format,
         ClientInterface $originalClient,
-    ): HttpClientMITMDecorator {
-        return new HttpClientMITMDecorator(
+    ): PsrClientMitmDecorator {
+        return new PsrClientMitmDecorator(
             $this->getDataModifier($proxyUid, $format),
             $originalClient,
         );

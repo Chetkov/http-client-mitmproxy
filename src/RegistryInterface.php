@@ -13,7 +13,6 @@ use Chetkov\HttpClientMitmproxy\DataTransform\Response\ResponseFormatterInterfac
 use Chetkov\HttpClientMitmproxy\Enum\Format;
 use Chetkov\HttpClientMitmproxy\FileSystem\FileSystemHelper;
 use Chetkov\HttpClientMitmproxy\MITM\DataModifier\DataModifierInterface;
-use Chetkov\HttpClientMitmproxy\MITM\HttpClientMITMDecorator;
 use Psr\Http\Client\ClientInterface;
 
 interface RegistryInterface
@@ -23,9 +22,9 @@ interface RegistryInterface
      * @param Format $format
      * @param ClientInterface $originalClient
      *
-     * @return HttpClientMITMDecorator
+     * @return ClientInterface
      */
-    public function getHttpClientMitmproxyDecorator(string $proxyUid, Format $format, ClientInterface $originalClient): HttpClientMITMDecorator;
+    public function getDecoratedHttpClient(string $proxyUid, Format $format, ClientInterface $originalClient): ClientInterface;
 
     /**
      * @param string $proxyUid

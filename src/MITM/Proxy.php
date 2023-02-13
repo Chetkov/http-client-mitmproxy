@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Chetkov\HttpClientMitmproxy;
+namespace Chetkov\HttpClientMitmproxy\MITM;
 
 use Chetkov\HttpClientMitmproxy\Communication\CommunicationChannelInterface;
 use Chetkov\HttpClientMitmproxy\Communication\Message\Command;
@@ -14,9 +14,8 @@ use Chetkov\HttpClientMitmproxy\Enum\Format;
 use Chetkov\HttpClientMitmproxy\Exception\NotImplementedException;
 use Chetkov\HttpClientMitmproxy\FileSystem\FileSystemHelper;
 
-class MITMProxy
+class Proxy
 {
-    private string $proxyUid;
     private string $storageDir;
 
     /**
@@ -24,15 +23,16 @@ class MITMProxy
      * @param ConsoleIOInterface $io
      * @param CommunicationChannelInterface $communicationChannel
      * @param string $proxyUid
+     * @param string $storageDir
      */
     public function __construct(
         private FileSystemHelper $filesystem,
         private ConsoleIOInterface $io,
         private CommunicationChannelInterface $communicationChannel,
-        string $proxyUid,
+        private string $proxyUid,
+        string $storageDir,
     ) {
-        $this->proxyUid = $proxyUid;
-        $this->storageDir = MITM_STORAGE_DIR . '/' . $proxyUid;
+        $this->storageDir = "$storageDir/$this->proxyUid";
         $this->filesystem->makeDir($this->storageDir);
     }
 
