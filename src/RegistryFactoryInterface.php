@@ -7,9 +7,9 @@ namespace Chetkov\HttpClientMitmproxy;
 interface RegistryFactoryInterface
 {
     /**
-     * @param string $storageDir
+     * @param string $tempDir
      *
      * @return RegistryInterface
      */
-    public function create(string $storageDir): RegistryInterface;
+    public function create(string $tempDir): RegistryInterface;
 }

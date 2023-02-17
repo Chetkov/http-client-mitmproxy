@@ -8,8 +8,10 @@ use Chetkov\HttpClientMitmproxy\Communication\CommunicationChannelInterface;
 use Chetkov\HttpClientMitmproxy\Communication\Message\Info;
 use Chetkov\HttpClientMitmproxy\Communication\Message\ModifiableData;
 use Chetkov\HttpClientMitmproxy\Communication\Message\Question;
-use Chetkov\HttpClientMitmproxy\DataTransform\Request\RequestExporterInterface;
-use Chetkov\HttpClientMitmproxy\DataTransform\Response\ResponseExporterInterface;
+use Chetkov\HttpClientMitmproxy\DataTransform\CharsetConverter\CharsetConverterInterface;
+use Chetkov\HttpClientMitmproxy\DataTransform\Request\RequestFormatterInterface;
+use Chetkov\HttpClientMitmproxy\DataTransform\Response\ResponseFormatterInterface;
+use Chetkov\HttpClientMitmproxy\Enum\Charset;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -17,13 +19,15 @@ class RealtimeDataModifier implements DataModifierInterface
 {
     /**
      * @param CommunicationChannelInterface $channel
-     * @param RequestExporterInterface $requestExporter
-     * @param ResponseExporterInterface $responseExporter
+     * @param RequestFormatterInterface $requestFormatter
+     * @param ResponseFormatterInterface $responseFormatter
+     * @param CharsetConverterInterface $charsetConverter
      */
     public function __construct(
         private CommunicationChannelInterface $channel,
-        private RequestExporterInterface $requestExporter,
-        private ResponseExporterInterface $responseExporter,
+        private RequestFormatterInterface $requestFormatter,
+        private ResponseFormatterInterface $responseFormatter,
+        private CharsetConverterInterface $charsetConverter,
     ) {
         $info = Info::create('***MITM STARTED***');
         $this->channel->sendMessage($info);
@@ -48,14 +52,21 @@ class RealtimeDataModifier implements DataModifierInterface
             return $request;
         }
 
+        $sourceCharsets = [];
         if ($command->isEdit()) {
-            $modifiableData = ModifiableData::create($this->requestExporter->exportRequest($request));
+            $dataInSourceCharset = $this->requestFormatter->toArray($request);
+            $dataInUnicode = $this->charsetConverter->convertData($dataInSourceCharset, Charset::utf8(), $sourceCharsets);
+
+            $modifiableData = ModifiableData::create($dataInUnicode);
             $this->channel->sendMessage($modifiableData);
         }
 
         $modifiedRequest = $this->channel->waitMessage()->asModifiableData();
 
-        return $this->requestExporter->importRequest((string) $modifiedRequest);
+        $modifiedDataInUnicode = $modifiedRequest->getData();
+        $modifiedDataInSourceCharset = $this->charsetConverter->reverseData($modifiedDataInUnicode, $sourceCharsets);
+
+        return $this->requestFormatter->fromArray($modifiedDataInSourceCharset);
     }
 
     /**
@@ -71,13 +82,20 @@ class RealtimeDataModifier implements DataModifierInterface
             return $response;
         }
 
+        $sourceCharsets = [];
         if ($command->isEdit()) {
-            $modifiableData = ModifiableData::create($this->responseExporter->exportResponse($response));
+            $dataInSourceCharset = $this->responseFormatter->toArray($response);
+            $dataInUnicode = $this->charsetConverter->convertData($dataInSourceCharset, Charset::utf8(), $sourceCharsets);
+
+            $modifiableData = ModifiableData::create($dataInUnicode);
             $this->channel->sendMessage($modifiableData);
         }
 
         $modifiedResponse = $this->channel->waitMessage()->asModifiableData();
 
-        return $this->responseExporter->importResponse((string) $modifiedResponse);
+        $modifiedDataInUnicode = $modifiedResponse->getData();
+        $modifiedDataInSourceCharset = $this->charsetConverter->reverseData($modifiedDataInUnicode, $sourceCharsets);
+
+        return $this->responseFormatter->fromArray($modifiedDataInSourceCharset);
     }
 }

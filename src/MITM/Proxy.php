@@ -8,57 +8,57 @@ use Chetkov\HttpClientMitmproxy\Communication\CommunicationChannelInterface;
 use Chetkov\HttpClientMitmproxy\Communication\Message\Command;
 use Chetkov\HttpClientMitmproxy\Communication\Message\ModifiableData;
 use Chetkov\HttpClientMitmproxy\Console\ConsoleIOInterface;
+use Chetkov\HttpClientMitmproxy\DataTransform\FormatConverter\FormatConverterFactory;
+use Chetkov\HttpClientMitmproxy\Editor\EditorInterface;
+use Chetkov\HttpClientMitmproxy\Enum\Agreement;
 use Chetkov\HttpClientMitmproxy\Enum\AppMode;
 use Chetkov\HttpClientMitmproxy\Enum\Editor;
 use Chetkov\HttpClientMitmproxy\Enum\Format;
 use Chetkov\HttpClientMitmproxy\Exception\NotImplementedException;
-use Chetkov\HttpClientMitmproxy\FileSystem\FileSystemHelper;
+use Chetkov\HttpClientMitmproxy\Helper\ArrayHelper;
 
 class Proxy
 {
-    private string $storageDir;
-
     /**
-     * @param FileSystemHelper $filesystem
      * @param ConsoleIOInterface $io
+     * @param FormatConverterFactory $formatConverterFactory
      * @param CommunicationChannelInterface $communicationChannel
+     * @param EditorInterface $editor
+     * @param ArrayHelper $arrayHelper
      * @param string $proxyUid
-     * @param string $storageDir
      */
     public function __construct(
-        private FileSystemHelper $filesystem,
         private ConsoleIOInterface $io,
+        private FormatConverterFactory $formatConverterFactory,
         private CommunicationChannelInterface $communicationChannel,
+        private EditorInterface $editor,
+        private ArrayHelper $arrayHelper,
         private string $proxyUid,
-        string $storageDir,
     ) {
-        $this->storageDir = "$storageDir/$this->proxyUid";
-        $this->filesystem->makeDir($this->storageDir);
     }
 
-    public function __destruct()
-    {
-        $this->filesystem->recursiveRemoveDir($this->storageDir);
-    }
+    /**
+     * @param AppMode|null $appMode
+     * @param Format|null $format
+     * @param Editor|null $editor
+     *
+     * @return void
+     */
+    public function start(
+        ?AppMode $appMode = null,
+        ?Format $format = null,
+        ?Editor $editor = null,
+    ): void {
+        $appMode ??= AppMode::fromValue($this->io->choice('Enter listening application mode:', AppMode::possibles(), (string) AppMode::cli()));
+        $format ??= Format::fromValue($this->io->choice('Enter format:', Format::possibles([(string) Format::text()]), (string) Format::yaml()));
+        $editor ??= Editor::fromValue($this->io->choice('Enter editor name:', Editor::possibles(), (string) Editor::nano()));
 
-    public function start(): void
-    {
-        try {
-            $appMode = AppMode::fromString($this->io->choice('Enter listening application mode:', AppMode::POSSIBLES, AppMode::CLI));
-            $format = Format::fromString($this->io->choice('Enter format:', Format::POSSIBLES, Format::YAML));
-            $editor = Editor::fromString($this->io->choice('Enter editor name:', Editor::POSSIBLES, Editor::NANO));
+        $this->showInstructions($appMode);
 
-            $editorPath = $this->getEditorPath($format);
+        $formatConverter = $this->formatConverterFactory->create($format);
 
-            $info = "ProxyUID: $this->proxyUid." . PHP_EOL . PHP_EOL;
-            $info .= match (true) {
-                $appMode->isCli() => "Set values to env variables:\n\n`export MITM_PROXY_UID=$this->proxyUid MITM_PROXY_FORMAT=$format && YOUR_COMMAND`",
-                $appMode->isWeb() => "Add values to get-parameters:\n\n`YOUR_URL?MITM_PROXY_UID=$this->proxyUid&MITM_PROXY_FORMAT=$format`",
-                default => throw new NotImplementedException(),
-            };
-            $this->io->warning($info);
-
-            while (true) {
+        while (true) {
+            try {
                 $message = $this->communicationChannel->waitMessage();
                 if ($message->isInfo()) {
                     $this->io->info((string) $message);
@@ -74,28 +74,67 @@ class Proxy
                     }
 
                     if ($command->isEdit()) {
-                        $dataForEditing = $this->communicationChannel->waitMessage();
+                        $modifiableData = $this->communicationChannel->waitMessage()->asModifiableData();
 
-                        file_put_contents($editorPath, (string) $dataForEditing);
-                        system("$editor $editorPath > `tty`");
+                        $dataForEditing = $modifiableData->getData();
+                        $elementsPaths = $this->arrayHelper->getElementsPaths($dataForEditing);
 
-                        $modifiedData = ModifiableData::create(file_get_contents($editorPath));
+                        while (true) {
+                            $partialEditingAgreement = Agreement::fromValue($this->io->choice(
+                                question: 'Would you like to open concrete element in editor to modify?',
+                                choices: Agreement::possibles(),
+                                default: (string) Agreement::no()
+                            ));
+
+                            if ($partialEditingAgreement->isNo()) {
+                                break;
+                            }
+
+                            $elementPath = $this->io->choice('Enter element path:', $elementsPaths);
+                            $elementValue = $this->arrayHelper->getElementValue($dataForEditing, $elementPath);
+
+                            $elementValue = $this->editor->edit((string) $elementValue, Format::text(), $editor);
+
+                            $dataForEditing = $this->arrayHelper->setElementValue($dataForEditing, $elementPath, $elementValue);
+                        }
+
+                        $fullEditingAgreement = Agreement::fromValue($this->io->choice(
+                            question: 'Would you like to edit all data or open it for viewing?',
+                            choices: Agreement::possibles(),
+                            default: (string) Agreement::no(),
+                        ));
+
+                        if ($fullEditingAgreement->isYes()) {
+                            $formattedData = $formatConverter->convert($dataForEditing);
+
+                            $formattedData = $this->editor->edit($formattedData, $format, $editor);
+
+                            $dataForEditing = $formatConverter->reverse($formattedData);
+                        }
+
+                        $modifiedData = ModifiableData::create($dataForEditing);
                         $this->communicationChannel->sendMessage($modifiedData);
                     }
                 }
+            } catch (\Throwable $e) {
+                $this->io->error((string) $e);
             }
-        } finally {
-            $this->filesystem->recursiveRemoveDir($this->storageDir);
         }
     }
 
     /**
-     * @param Format $format
+     * @param AppMode $appMode
      *
-     * @return string
+     * @return void
      */
-    protected function getEditorPath(Format $format): string
+    private function showInstructions(AppMode $appMode): void
     {
-        return $this->storageDir . "/editor.$format";
+        $info = "ProxyUID: $this->proxyUid" . PHP_EOL . PHP_EOL;
+        $info .= match (true) {
+            $appMode->isCli() => "Set values to env variables:\n\n`export MITM_PROXY_UID=$this->proxyUid && YOUR_COMMAND`",
+            $appMode->isWeb() => "Add values to get-parameters:\n\n`YOUR_URL?MITM_PROXY_UID=$this->proxyUid`",
+            default => throw new NotImplementedException(),
+        };
+        $this->io->warning($info);
     }
 }

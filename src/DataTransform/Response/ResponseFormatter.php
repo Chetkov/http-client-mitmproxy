@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Chetkov\HttpClientMitmproxy\DataTransform\Response;
 
-use Chetkov\HttpClientMitmproxy\DataTransform\Response\ResponseFormatterInterface;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 

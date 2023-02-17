@@ -120,8 +120,8 @@ abstract class AbstractMessage
                 'class' => get_class($this),
                 'arguments' => $this->getConstructorArgumentValues(),
             ], JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
-            throw new TypeCastException('array', 'json');
+        } catch (\JsonException $e) {
+            throw new TypeCastException('array', 'json', previous: $e);
         }
     }
 
@@ -136,8 +136,8 @@ abstract class AbstractMessage
             ['class' => $class, 'arguments' => $arguments] = json_decode($encoded, true, 512, JSON_THROW_ON_ERROR);
 
             return new $class(...$arguments);
-        } catch (\JsonException) {
-            throw new TypeCastException('json', 'array');
+        } catch (\JsonException $e) {
+            throw new TypeCastException('json', 'array', previous: $e);
         }
     }
 

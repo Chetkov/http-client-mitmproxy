@@ -7,10 +7,10 @@ namespace Chetkov\HttpClientMitmproxy\DataTransform\FormatConverter;
 class PHPFormatConverter implements FormatConverterInterface
 {
     /**
-     * @param string $storageDir
+     * @param string $tempDir
      */
     public function __construct(
-        private string $storageDir,
+        private string $tempDir,
     ) {
     }
 
@@ -27,7 +27,7 @@ class PHPFormatConverter implements FormatConverterInterface
      */
     public function reverse(string $data): array
     {
-        $tmpFilename = $this->storageDir . '/' . md5(uniqid((string) getmypid(), true)) . '.php';
+        $tmpFilename = $this->tempDir . '/' . md5(uniqid((string) getmypid(), true)) . '.php';
         file_put_contents($tmpFilename, $data);
         try {
             return require $tmpFilename;

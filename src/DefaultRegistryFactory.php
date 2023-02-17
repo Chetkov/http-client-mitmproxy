@@ -23,21 +23,19 @@ class DefaultRegistryFactory implements RegistryFactoryInterface
     {
         $this->redis = new \Redis();
         $this->redis->connect(
-            host: $redisConfig['host'],
-            port: $redisConfig['port'],
-            timeout: $redisConfig['timeout'],
-            retry_interval: $redisConfig['retry_interval'],
-            read_timeout: $redisConfig['read_timeout'],
+            host: $redisConfig['host'] ?? 'localhost',
+            port: $redisConfig['port'] ?? 6379,
+            timeout: $redisConfig['timeout'] ?? 0,
         );
     }
 
     /**
-     * @param string $storageDir
+     * @param string $tempDir
      *
      * @return DefaultRegistry
      */
-    public function create(string $storageDir): DefaultRegistry
+    public function create(string $tempDir): DefaultRegistry
     {
-        return new DefaultRegistry($this->redis, $storageDir);
+        return new DefaultRegistry($this->redis, $tempDir);
     }
 }

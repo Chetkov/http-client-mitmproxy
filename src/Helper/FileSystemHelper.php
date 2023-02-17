@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Chetkov\HttpClientMitmproxy\FileSystem;
+namespace Chetkov\HttpClientMitmproxy\Helper;
 
 use Chetkov\HttpClientMitmproxy\Exception\FileSystemException;
 use FilesystemIterator;

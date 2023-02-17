@@ -4,30 +4,25 @@ declare(strict_types=1);
 
 namespace Chetkov\HttpClientMitmproxy\Enum;
 
-use Chetkov\HttpClientMitmproxy\Exception\UnexpectedValueException;
-
-class Format
+class Format extends AbstractEnum
 {
-    public const
+    private const
         YAML = 'yaml',
         JSON = 'json',
-        PHP = 'php';
-
-    public const POSSIBLES = [
-        self::YAML,
-        self::JSON,
-        self::PHP,
-    ];
+        PHP = 'php',
+        TEXT = 'txt';
 
     /**
-     * @param string $format
+     * @return array<string>
      */
-    public function __construct(
-        private string $format,
-    ) {
-        if (!in_array($format, self::POSSIBLES, true)) {
-            throw new UnexpectedValueException($this->format, self::POSSIBLES);
-        }
+    public static function possibles(array $filter = []): array
+    {
+        return array_diff([
+            self::YAML,
+            self::JSON,
+            self::PHP,
+            self::TEXT,
+        ], $filter);
     }
 
     /**
@@ -55,13 +50,11 @@ class Format
     }
 
     /**
-     * @param string $format
-     *
      * @return self
      */
-    public static function fromString(string $format): self
+    public static function text(): self
     {
-        return new self($format);
+        return new self(self::TEXT);
     }
 
     /**
@@ -69,7 +62,7 @@ class Format
      */
     public function isYaml(): bool
     {
-        return $this->format === self::YAML;
+        return $this->value() === self::YAML;
     }
 
     /**
@@ -77,7 +70,7 @@ class Format
      */
     public function isJson(): bool
     {
-        return $this->format === self::JSON;
+        return $this->value() === self::JSON;
     }
 
     /**
@@ -85,14 +78,14 @@ class Format
      */
     public function isPhp(): bool
     {
-        return $this->format === self::PHP;
+        return $this->value() === self::PHP;
     }
 
     /**
-     * @return string
+     * @return bool
      */
-    public function __toString(): string
+    public function isText(): bool
     {
-        return $this->format;
+        return $this->value() === self::TEXT;
     }
 }

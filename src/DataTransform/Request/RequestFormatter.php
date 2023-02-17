@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Chetkov\HttpClientMitmproxy\DataTransform\Request;
 
-use Chetkov\HttpClientMitmproxy\DataTransform\Request\RequestFormatterInterface;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\RequestInterface;
@@ -24,8 +23,7 @@ class RequestFormatter implements RequestFormatterInterface
         FIELD_URI_QUERY = 'query',
         FIELD_URI_FRAGMENT = 'fragment',
         FIELD_HEADERS = 'headers',
-        FIELD_BODY = 'body',
-        FIELD_REQUEST_TARGET = 'request_target';
+        FIELD_BODY = 'body';
 
     /**
      * @inheritDoc
@@ -51,7 +49,6 @@ class RequestFormatter implements RequestFormatterInterface
             ],
             self::FIELD_HEADERS => $request->getHeaders(),
             self::FIELD_BODY => $request->getBody()->getContents(),
-            self::FIELD_REQUEST_TARGET => $request->getRequestTarget(),
         ];
     }
 
@@ -60,18 +57,12 @@ class RequestFormatter implements RequestFormatterInterface
      */
     public function fromArray(array $requestData): RequestInterface
     {
-        $request = new Request(
+        return new Request(
             $requestData[self::FIELD_METHOD],
             Uri::fromParts($requestData[self::FIELD_URI]),
             $requestData[self::FIELD_HEADERS],
             $requestData[self::FIELD_BODY],
             $requestData[self::FIELD_PROTOCOL_VERSION],
         );
-
-        if ($requestTarget = $requestData[self::FIELD_REQUEST_TARGET]) {
-            $request = $request->withRequestTarget($requestTarget);
-        }
-
-        return $request;
     }
 }

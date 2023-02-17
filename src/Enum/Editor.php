@@ -4,30 +4,23 @@ declare(strict_types=1);
 
 namespace Chetkov\HttpClientMitmproxy\Enum;
 
-use Chetkov\HttpClientMitmproxy\Exception\UnexpectedValueException;
-
-class Editor
+class Editor extends AbstractEnum
 {
-    public const
+    private const
         NANO = 'nano',
         VIM = 'vim',
         GEDIT = 'gedit';
 
-    public const POSSIBLES = [
-        self::NANO,
-        self::VIM,
-        self::GEDIT,
-    ];
-
     /**
-     * @param string $editor
+     * @return array<string>
      */
-    public function __construct(
-        private string $editor,
-    ) {
-        if (!in_array($editor, self::POSSIBLES, true)) {
-            throw new UnexpectedValueException($editor, self::POSSIBLES);
-        }
+    public static function possibles(): array
+    {
+        return [
+            self::NANO,
+            self::VIM,
+            self::GEDIT,
+        ];
     }
 
     /**
@@ -55,21 +48,11 @@ class Editor
     }
 
     /**
-     * @param string $editor
-     *
-     * @return self
-     */
-    public static function fromString(string $editor): self
-    {
-        return new self($editor);
-    }
-
-    /**
      * @return bool
      */
     public function isNano(): bool
     {
-        return $this->editor === self::NANO;
+        return $this->value() === self::NANO;
     }
 
     /**
@@ -77,7 +60,7 @@ class Editor
      */
     public function isVim(): bool
     {
-        return $this->editor === self::VIM;
+        return $this->value() === self::VIM;
     }
 
     /**
@@ -85,14 +68,6 @@ class Editor
      */
     public function isGedit(): bool
     {
-        return $this->editor === self::GEDIT;
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString(): string
-    {
-        return $this->editor;
+        return $this->value() === self::GEDIT;
     }
 }

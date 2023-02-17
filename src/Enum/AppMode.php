@@ -4,28 +4,21 @@ declare(strict_types=1);
 
 namespace Chetkov\HttpClientMitmproxy\Enum;
 
-use Chetkov\HttpClientMitmproxy\Exception\UnexpectedValueException;
-
-class AppMode
+class AppMode extends AbstractEnum
 {
-    public const
+    private const
         CLI = 'cli',
         WEB = 'web';
 
-    public const POSSIBLES = [
-        self::CLI,
-        self::WEB,
-    ];
-
     /**
-     * @param string $appMode
+     * @return array<string>
      */
-    public function __construct(
-        private string $appMode,
-    ) {
-        if (!in_array($appMode, self::POSSIBLES, true)) {
-            throw new UnexpectedValueException($this->appMode, self::POSSIBLES);
-        }
+    public static function possibles(): array
+    {
+        return [
+            self::CLI,
+            self::WEB,
+        ];
     }
 
     /**
@@ -45,21 +38,11 @@ class AppMode
     }
 
     /**
-     * @param string $appMode
-     *
-     * @return self
-     */
-    public static function fromString(string $appMode): self
-    {
-        return new self($appMode);
-    }
-
-    /**
      * @return bool
      */
     public function isCli(): bool
     {
-        return $this->appMode === self::CLI;
+        return $this->value() === self::CLI;
     }
 
     /**
@@ -67,14 +50,6 @@ class AppMode
      */
     public function isWeb(): bool
     {
-        return $this->appMode === self::WEB;
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString(): string
-    {
-        return $this->appMode;
+        return $this->value() === self::WEB;
     }
 }

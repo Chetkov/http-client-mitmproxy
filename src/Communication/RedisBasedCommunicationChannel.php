@@ -43,7 +43,7 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
      */
     public function sendMessage(AbstractMessage $message): void
     {
-        while ($this->messageCounter > $this->getLastReadCounterValue()) {
+        while ($this->getLastReadCounterValue() < $this->messageCounter) {
             // Ждем, пока подписчик прочитает предыдущее сообщение, чтоб не перетереть его новым
             usleep(100000);
         }
@@ -63,7 +63,7 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
 
         while (true) {
             $lastCounterValue = $this->getLastSharedCounterValue();
-            if ($lastCounterValue !== $this->messageCounter) {
+            if ($this->messageCounter !== $lastCounterValue) {
                 $this->messageCounter = $lastCounterValue;
                 $this->redis->set($this->getLastReadCacheKey(), (string) $lastCounterValue);
 

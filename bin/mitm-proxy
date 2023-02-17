@@ -2,16 +2,12 @@
 <?php
 
 declare(strict_types=1);
-declare(ticks = 1);
 
-use Chetkov\HttpClientMitmproxy\DefaultRegistryFactory;
+use Chetkov\HttpClientMitmproxy\Console\Command\MitmProxyCommand;
+use Symfony\Component\Console\Application;
 
 require_once dirname(__DIR__) . '/bootstrap.php';
 
-$storageDir = $argv[1] ?? MITM_STORAGE_DIR;
-$proxyUid = md5(uniqid((string) getmypid(), true));
-
-(new DefaultRegistryFactory())
-    ->create($storageDir)
-    ->getProxy($proxyUid)
-    ->start();
+$application = new Application();
+$application->add(new MitmProxyCommand());
+$application->run();
