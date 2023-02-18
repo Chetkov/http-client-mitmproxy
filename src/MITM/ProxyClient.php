@@ -17,7 +17,7 @@ use Chetkov\HttpClientMitmproxy\Enum\Format;
 use Chetkov\HttpClientMitmproxy\Exception\NotImplementedException;
 use Chetkov\HttpClientMitmproxy\Helper\ArrayHelper;
 
-class Proxy
+class ProxyClient
 {
     /**
      * @param ConsoleIOInterface $io

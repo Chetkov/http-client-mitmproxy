@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Chetkov\HttpClientMitmproxy\Console\Command;
 
-use Chetkov\HttpClientMitmproxy\DefaultRegistryFactory;
+use Chetkov\HttpClientMitmproxy\DefaultFactory;
 use Chetkov\HttpClientMitmproxy\Enum\AppMode;
 use Chetkov\HttpClientMitmproxy\Enum\Editor;
 use Chetkov\HttpClientMitmproxy\Enum\Format;
+use Chetkov\HttpClientMitmproxy\MitmProxyFactoryInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -20,6 +21,15 @@ class MitmProxyCommand extends Command
 {
     /** @var string */
     protected static $defaultDescription = 'Starts a mitm-proxy client.';
+
+    /**
+     * @param DefaultFactory $factory
+     */
+    public function __construct(
+        private MitmProxyFactoryInterface $factory
+    ) {
+        parent::__construct();
+    }
 
     protected function configure(): void
     {
@@ -62,9 +72,8 @@ class MitmProxyCommand extends Command
                 $editor = Editor::fromValue($editor);
             }
 
-            (new DefaultRegistryFactory())
-                ->create($tempDir)
-                ->getProxy($proxyUid, $input)
+            $this->factory
+                ->createProxyClient($proxyUid, $tempDir)
                 ->start($appMode, $format, $editor);
 
             return Command::SUCCESS;
