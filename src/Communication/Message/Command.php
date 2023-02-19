@@ -33,6 +33,30 @@ class Command extends AbstractMessage
     }
 
     /**
+     * @return array<string>
+     */
+    public static function possibles(): array
+    {
+        return self::POSSIBLES;
+    }
+
+    /**
+     * @return self
+     */
+    public static function skip(): self
+    {
+        return new self(self::COMMAND_SKIP);
+    }
+
+    /**
+     * @return self
+     */
+    public static function edit(): self
+    {
+        return new self(self::COMMAND_EDIT);
+    }
+
+    /**
      * @return bool
      */
     public function isSkip(): bool

@@ -10,20 +10,14 @@ use Chetkov\HttpClientMitmproxy\Helper\FileSystemHelper;
 
 class FileBasedEditor implements EditorInterface
 {
-    private string $tempDir;
-
     /**
      * @param FileSystemHelper $filesystem
-     * @param string $proxyUid
      * @param string $tempDir
      */
     public function __construct(
         private FileSystemHelper $filesystem,
-        string $proxyUid,
-        string $tempDir,
+        private string $tempDir,
     ) {
-
-        $this->tempDir = "$tempDir/$proxyUid";
         $this->filesystem->makeDir($this->tempDir);
     }
 

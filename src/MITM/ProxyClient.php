@@ -6,9 +6,12 @@ namespace Chetkov\HttpClientMitmproxy\MITM;
 
 use Chetkov\HttpClientMitmproxy\Communication\CommunicationChannelInterface;
 use Chetkov\HttpClientMitmproxy\Communication\Message\Command;
+use Chetkov\HttpClientMitmproxy\Communication\Message\Info;
 use Chetkov\HttpClientMitmproxy\Communication\Message\ModifiableData;
+use Chetkov\HttpClientMitmproxy\Communication\Message\Question;
 use Chetkov\HttpClientMitmproxy\Console\ConsoleIOInterface;
 use Chetkov\HttpClientMitmproxy\DataTransform\FormatConverter\FormatConverterFactory;
+use Chetkov\HttpClientMitmproxy\DataTransform\FormatConverter\FormatConverterInterface;
 use Chetkov\HttpClientMitmproxy\Editor\EditorInterface;
 use Chetkov\HttpClientMitmproxy\Enum\Agreement;
 use Chetkov\HttpClientMitmproxy\Enum\AppMode;
@@ -19,6 +22,8 @@ use Chetkov\HttpClientMitmproxy\Helper\ArrayHelper;
 
 class ProxyClient
 {
+    private FormatConverterInterface $formatConverter;
+
     /**
      * @param ConsoleIOInterface $io
      * @param FormatConverterFactory $formatConverterFactory
@@ -55,71 +60,35 @@ class ProxyClient
 
         $this->showInstructions($appMode);
 
-        $formatConverter = $this->formatConverterFactory->create($format);
+        $this->formatConverter = $this->formatConverterFactory->create($format);
 
         while (true) {
             try {
                 $message = $this->communicationChannel->waitMessage();
-                if ($message->isInfo()) {
-                    $this->io->info((string) $message);
-                    continue;
-                }
+                switch (true) {
+                    case $message->isInfo():
+                        $this->handleInfo($message->asInfo());
+                        break;
 
-                if ($message->isQuestion() && $question = $message->asQuestion()) {
-                    $command = Command::create($this->io->choice($question->getQuestion(), $question->getChoices(), $question->getDefault()));
-                    $this->communicationChannel->sendMessage($command);
+                    case $message->isQuestion():
+                        $this->handleQuestion($message->asQuestion());
+                        break;
 
-                    if ($command->isSkip()) {
-                        continue;
-                    }
+                    case $message->isModifiableData():
+                        $this->handleModifiableData($message->asModifiableData(), $format, $editor);
+                        break;
 
-                    if ($command->isEdit()) {
-                        $modifiableData = $this->communicationChannel->waitMessage()->asModifiableData();
-
-                        $dataForEditing = $modifiableData->getData();
-                        $elementsPaths = $this->arrayHelper->getElementsPaths($dataForEditing);
-
-                        while (true) {
-                            $partialEditingAgreement = Agreement::fromValue($this->io->choice(
-                                question: 'Would you like to open concrete element in editor to modify?',
-                                choices: Agreement::possibles(),
-                                default: (string) Agreement::no()
-                            ));
-
-                            if ($partialEditingAgreement->isNo()) {
-                                break;
-                            }
-
-                            $elementPath = $this->io->choice('Enter element path:', $elementsPaths);
-                            $elementValue = $this->arrayHelper->getElementValue($dataForEditing, $elementPath);
-
-                            $elementValue = $this->editor->edit((string) $elementValue, Format::text(), $editor);
-
-                            $dataForEditing = $this->arrayHelper->setElementValue($dataForEditing, $elementPath, $elementValue);
-                        }
-
-                        $fullEditingAgreement = Agreement::fromValue($this->io->choice(
-                            question: 'Would you like to edit all data or open it for viewing?',
-                            choices: Agreement::possibles(),
-                            default: (string) Agreement::no(),
-                        ));
-
-                        if ($fullEditingAgreement->isYes()) {
-                            $formattedData = $formatConverter->convert($dataForEditing);
-
-                            $formattedData = $this->editor->edit($formattedData, $format, $editor);
-
-                            $dataForEditing = $formatConverter->reverse($formattedData);
-                        }
-
-                        $modifiedData = ModifiableData::create($dataForEditing);
-                        $this->communicationChannel->sendMessage($modifiedData);
-                    }
+                    default:
                 }
             } catch (\Throwable $e) {
                 $this->io->error((string) $e);
             }
         }
+    }
+
+    public function stop(): void
+    {
+        // Implement when needed
     }
 
     /**
@@ -136,5 +105,79 @@ class ProxyClient
             default => throw new NotImplementedException(),
         };
         $this->io->warning($info);
+    }
+
+    /**
+     * @param Info $info
+     *
+     * @return void
+     */
+    private function handleInfo(Info $info): void
+    {
+        $this->io->info((string) $info);
+    }
+
+    /**
+     * @param Question $question
+     *
+     * @return void
+     */
+    private function handleQuestion(Question $question): void
+    {
+        $command = Command::create($this->io->choice(
+            $question->getQuestion(),
+            $question->getChoices(),
+            $question->getDefault()
+        ));
+        $this->communicationChannel->sendMessage($command);
+    }
+
+    /**
+     * @param ModifiableData $modifiableData
+     * @param Format $format
+     * @param Editor $editor
+     *
+     * @return void
+     */
+    private function handleModifiableData(ModifiableData $modifiableData, Format $format, Editor $editor): void
+    {
+        $dataForEditing = $modifiableData->getData();
+        $elementsPaths = $this->arrayHelper->getElementsPaths($dataForEditing);
+
+        while (true) {
+            $partialEditingAgreement = Agreement::fromValue($this->io->choice(
+                question: 'Would you like to open concrete element in editor to modify?',
+                choices: Agreement::possibles(),
+                default: (string) Agreement::no()
+            ));
+
+            if ($partialEditingAgreement->isNo()) {
+                break;
+            }
+
+            $elementPath = $this->io->choice('Enter element path:', $elementsPaths);
+            $elementValue = $this->arrayHelper->getElementValue($dataForEditing, $elementPath);
+
+            $elementValue = $this->editor->edit((string) $elementValue, Format::text(), $editor);
+
+            $dataForEditing = $this->arrayHelper->setElementValue($dataForEditing, $elementPath, $elementValue);
+        }
+
+        $fullEditingAgreement = Agreement::fromValue($this->io->choice(
+            question: 'Would you like to edit all data or open it for viewing?',
+            choices: Agreement::possibles(),
+            default: (string) Agreement::no(),
+        ));
+
+        if ($fullEditingAgreement->isYes()) {
+            $formattedData = $this->formatConverter->convert($dataForEditing);
+
+            $formattedData = $this->editor->edit($formattedData, $format, $editor);
+
+            $dataForEditing = $this->formatConverter->reverse($formattedData);
+        }
+
+        $modifiedData = ModifiableData::create($dataForEditing);
+        $this->communicationChannel->sendMessage($modifiedData);
     }
 }

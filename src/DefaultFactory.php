@@ -33,6 +33,14 @@ class DefaultFactory implements MitmProxyFactoryInterface
     }
 
     /**
+     * @inheritDoc
+     */
+    public function reconfigure(array $config): void
+    {
+        $this->config = $config;
+    }
+
+    /**
      * @param string $proxyUid
      * @param string $tempDir
      *
@@ -42,11 +50,13 @@ class DefaultFactory implements MitmProxyFactoryInterface
      */
     public function createProxyClient(string $proxyUid, string $tempDir): ProxyClient
     {
+        $tempDir = "$tempDir/$proxyUid";
+
         return new ProxyClient(
             new SymfonyConsoleIOAdapter(new SymfonyStyle(new ArgvInput(), new ConsoleOutput())),
             new FormatConverterFactory($tempDir),
             $this->createCommunicationChannel($proxyUid),
-            new FileBasedEditor(new FileSystemHelper(), $proxyUid, $tempDir),
+            new FileBasedEditor(new FileSystemHelper(), $tempDir),
             new ArrayHelper(),
             $proxyUid
         );
@@ -82,8 +92,10 @@ class DefaultFactory implements MitmProxyFactoryInterface
      */
     protected function createCommunicationChannel(string $proxyUid): CommunicationChannelInterface
     {
+        $redisConfig = $this->config['redis'];
+
         $redis = new \Redis();
-        $redis->connect($this->redisConfig['host'], $this->redisConfig['port'], $this->redisConfig['timeout']);
+        $redis->connect($redisConfig['host'], $redisConfig['port'], $redisConfig['timeout']);
 
         return new RedisBasedCommunicationChannel($redis, $proxyUid);
     }

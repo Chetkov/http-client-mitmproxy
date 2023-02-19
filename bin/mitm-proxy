@@ -3,16 +3,14 @@
 
 declare(strict_types=1);
 
-use Chetkov\HttpClientMitmproxy\Console\Command\MitmProxyCommand;
+use Chetkov\HttpClientMitmproxy\Console\Command\MitmProxyStartCommand;
 use Chetkov\HttpClientMitmproxy\DefaultFactory;
 use Symfony\Component\Console\Application;
 
 require_once dirname(__DIR__) . '/bootstrap.php';
 
-//todo: откуда взять конфиг???
-
-//todo: очищать папку tmp и redis при ЛЮБОМ завершении процесса
+$config = require MITM_CONFIG_DIR . '/config.php';
 
 $application = new Application();
-$application->add(new MitmProxyCommand(new DefaultFactory([])));
+$application->add(new MitmProxyStartCommand(new DefaultFactory($config)));
 $application->run();

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chetkov\HttpClientMitmproxy\MITM\DataModifier;
 
 use Chetkov\HttpClientMitmproxy\Communication\CommunicationChannelInterface;
+use Chetkov\HttpClientMitmproxy\Communication\Message\Command;
 use Chetkov\HttpClientMitmproxy\Communication\Message\Info;
 use Chetkov\HttpClientMitmproxy\Communication\Message\ModifiableData;
 use Chetkov\HttpClientMitmproxy\Communication\Message\Question;
@@ -44,7 +45,7 @@ class RealtimeDataModifier implements DataModifierInterface
      */
     public function modifyRequest(RequestInterface $request): RequestInterface
     {
-        $question = Question::create("Отредактировать запрос '{$request->getUri()}' перед отправкой?", ['skip', 'edit'], 'skip');
+        $question = Question::create("Отредактировать запрос '{$request->getUri()}' перед отправкой?", Command::possibles(), (string) Command::skip());
         $this->channel->sendMessage($question);
 
         $command = $this->channel->waitMessage()->asCommand();
@@ -61,7 +62,12 @@ class RealtimeDataModifier implements DataModifierInterface
             $this->channel->sendMessage($modifiableData);
         }
 
-        $modifiedRequest = $this->channel->waitMessage()->asModifiableData();
+        $message = $this->channel->waitMessage();
+        if ($message->isCommand() && $message->asCommand()->isSkip()) {
+            return $request;
+        }
+
+        $modifiedRequest = $message->asModifiableData();
 
         $modifiedDataInUnicode = $modifiedRequest->getData();
         $modifiedDataInSourceCharset = $this->charsetConverter->reverseData($modifiedDataInUnicode, $sourceCharsets);
@@ -74,7 +80,7 @@ class RealtimeDataModifier implements DataModifierInterface
      */
     public function modifyResponse(ResponseInterface $response): ResponseInterface
     {
-        $question = Question::create('Отредактировать ответ перед продолжением?', ['skip', 'edit'], 'skip');
+        $question = Question::create('Отредактировать ответ перед продолжением?', Command::possibles(), (string) Command::skip());
         $this->channel->sendMessage($question);
 
         $command = $this->channel->waitMessage()->asCommand();
@@ -91,7 +97,12 @@ class RealtimeDataModifier implements DataModifierInterface
             $this->channel->sendMessage($modifiableData);
         }
 
-        $modifiedResponse = $this->channel->waitMessage()->asModifiableData();
+        $message = $this->channel->waitMessage();
+        if ($message->isCommand() && $message->asCommand()->isSkip()) {
+            return $response;
+        }
+
+        $modifiedResponse = $message->asModifiableData();
 
         $modifiedDataInUnicode = $modifiedResponse->getData();
         $modifiedDataInSourceCharset = $this->charsetConverter->reverseData($modifiedDataInUnicode, $sourceCharsets);

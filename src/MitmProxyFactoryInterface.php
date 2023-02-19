@@ -10,6 +10,13 @@ use Psr\Http\Client\ClientInterface;
 interface MitmProxyFactoryInterface
 {
     /**
+     * @param array $config
+     *
+     * @return void
+     */
+    public function reconfigure(array $config): void;
+
+    /**
      * @param string $proxyUid
      * @param string $tempDir
      *

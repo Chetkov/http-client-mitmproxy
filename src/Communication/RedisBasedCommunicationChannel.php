@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chetkov\HttpClientMitmproxy\Communication;
 
 use Chetkov\HttpClientMitmproxy\Communication\Message\AbstractMessage;
+use Chetkov\HttpClientMitmproxy\Communication\Message\Command;
 
 class RedisBasedCommunicationChannel implements CommunicationChannelInterface
 {
@@ -33,6 +34,8 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
         if ($otherClients === 0) {
             $this->redis->del($this->getMessageCacheKey());
             $this->redis->del($this->getCounterCacheKey());
+            $this->redis->del($this->getLastReadCacheKey());
+            $this->redis->del($this->getClientCounterCacheKey());
         }
     }
 
@@ -43,6 +46,10 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
      */
     public function sendMessage(AbstractMessage $message): void
     {
+        if (!$this->isSubscribersExists()) {
+            return;
+        }
+
         while ($this->getLastReadCounterValue() < $this->messageCounter) {
             // Ждем, пока подписчик прочитает предыдущее сообщение, чтоб не перетереть его новым
             usleep(100000);
@@ -59,6 +66,10 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
      */
     public function waitMessage(int $loopIntervalInMs = 100): AbstractMessage
     {
+        if (!$this->isSubscribersExists()) {
+            return Command::skip();
+        }
+
         $loopIntervalInMicroseconds = $loopIntervalInMs * 1000;
 
         while (true) {
@@ -74,6 +85,16 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
             }
             usleep($loopIntervalInMicroseconds);
         }
+    }
+
+    /**
+     * @return bool
+     *
+     * @throws \RedisException
+     */
+    private function isSubscribersExists(): bool
+    {
+        return (int) $this->redis->get($this->getClientCounterCacheKey()) > 1;
     }
 
     /**
