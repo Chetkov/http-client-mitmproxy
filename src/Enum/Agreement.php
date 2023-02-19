@@ -16,8 +16,8 @@ class Agreement extends AbstractEnum
     public static function possibles(): array
     {
         return [
-            self::YES,
             self::NO,
+            self::YES,
         ];
     }
 
