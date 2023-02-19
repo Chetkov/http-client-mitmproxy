@@ -18,6 +18,7 @@ use Chetkov\HttpClientMitmproxy\Enum\AppMode;
 use Chetkov\HttpClientMitmproxy\Enum\Editor;
 use Chetkov\HttpClientMitmproxy\Enum\Format;
 use Chetkov\HttpClientMitmproxy\Exception\NotImplementedException;
+use Chetkov\HttpClientMitmproxy\Exception\PublishersNotFoundException;
 use Chetkov\HttpClientMitmproxy\Helper\ArrayHelper;
 
 class ProxyClient
@@ -80,6 +81,7 @@ class ProxyClient
 
                     default:
                 }
+            } catch (PublishersNotFoundException) {
             } catch (\Throwable $e) {
                 $this->io->error((string) $e);
             }

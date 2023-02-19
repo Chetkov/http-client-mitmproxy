@@ -13,6 +13,7 @@ use Chetkov\HttpClientMitmproxy\DataTransform\CharsetConverter\CharsetConverterI
 use Chetkov\HttpClientMitmproxy\DataTransform\Request\RequestFormatterInterface;
 use Chetkov\HttpClientMitmproxy\DataTransform\Response\ResponseFormatterInterface;
 use Chetkov\HttpClientMitmproxy\Enum\Charset;
+use Chetkov\HttpClientMitmproxy\Exception\PublishersNotFoundException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -48,7 +49,12 @@ class RealtimeDataModifier implements DataModifierInterface
         $question = Question::create("Отредактировать запрос '{$request->getUri()}' перед отправкой?", Command::possibles(), (string) Command::skip());
         $this->channel->sendMessage($question);
 
-        $command = $this->channel->waitMessage()->asCommand();
+        try {
+            $command = $this->channel->waitMessage()->asCommand();
+        } catch (PublishersNotFoundException) {
+            return $request;
+        }
+
         if ($command->isSkip()) {
             return $request;
         }
@@ -62,12 +68,11 @@ class RealtimeDataModifier implements DataModifierInterface
             $this->channel->sendMessage($modifiableData);
         }
 
-        $message = $this->channel->waitMessage();
-        if ($message->isCommand() && $message->asCommand()->isSkip()) {
-            return $request;
+        try {
+            $modifiedRequest = $this->channel->waitMessage()->asModifiableData();
+        } catch (PublishersNotFoundException) {
+            return isset($dataInSourceCharset) ? $this->requestFormatter->fromArray($dataInSourceCharset) : $request;
         }
-
-        $modifiedRequest = $message->asModifiableData();
 
         $modifiedDataInUnicode = $modifiedRequest->getData();
         $modifiedDataInSourceCharset = $this->charsetConverter->reverseData($modifiedDataInUnicode, $sourceCharsets);
@@ -83,7 +88,12 @@ class RealtimeDataModifier implements DataModifierInterface
         $question = Question::create('Отредактировать ответ перед продолжением?', Command::possibles(), (string) Command::skip());
         $this->channel->sendMessage($question);
 
-        $command = $this->channel->waitMessage()->asCommand();
+        try {
+            $command = $this->channel->waitMessage()->asCommand();
+        } catch (PublishersNotFoundException) {
+            return $response;
+        }
+
         if ($command->isSkip()) {
             return $response;
         }
@@ -97,12 +107,11 @@ class RealtimeDataModifier implements DataModifierInterface
             $this->channel->sendMessage($modifiableData);
         }
 
-        $message = $this->channel->waitMessage();
-        if ($message->isCommand() && $message->asCommand()->isSkip()) {
-            return $response;
+        try {
+            $modifiedResponse = $this->channel->waitMessage()->asModifiableData();
+        } catch (PublishersNotFoundException) {
+            return isset($dataInSourceCharset) ? $this->responseFormatter->fromArray($dataInSourceCharset) : $response;
         }
-
-        $modifiedResponse = $message->asModifiableData();
 
         $modifiedDataInUnicode = $modifiedResponse->getData();
         $modifiedDataInSourceCharset = $this->charsetConverter->reverseData($modifiedDataInUnicode, $sourceCharsets);

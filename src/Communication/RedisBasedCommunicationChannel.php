@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Chetkov\HttpClientMitmproxy\Communication;
 
 use Chetkov\HttpClientMitmproxy\Communication\Message\AbstractMessage;
-use Chetkov\HttpClientMitmproxy\Communication\Message\Command;
+use Chetkov\HttpClientMitmproxy\Exception\PublishersNotFoundException;
 
 class RedisBasedCommunicationChannel implements CommunicationChannelInterface
 {
@@ -46,7 +46,7 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
      */
     public function sendMessage(AbstractMessage $message): void
     {
-        if (!$this->isSubscribersExists()) {
+        if (!$this->isPubSubExists()) {
             return;
         }
 
@@ -62,14 +62,10 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
     /**
      * @inheritDoc
      *
-     * @throws \RedisException
+     * @throws PublishersNotFoundException|\RedisException
      */
     public function waitMessage(int $loopIntervalInMs = 100): AbstractMessage
     {
-        if (!$this->isSubscribersExists()) {
-            return Command::skip();
-        }
-
         $loopIntervalInMicroseconds = $loopIntervalInMs * 1000;
 
         while (true) {
@@ -83,6 +79,11 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
                     return AbstractMessage::fromJson($jsonMessage);
                 }
             }
+
+            if (!$this->isPubSubExists()) {
+                throw new PublishersNotFoundException();
+            }
+
             usleep($loopIntervalInMicroseconds);
         }
     }
@@ -92,7 +93,7 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
      *
      * @throws \RedisException
      */
-    private function isSubscribersExists(): bool
+    private function isPubSubExists(): bool
     {
         return (int) $this->redis->get($this->getClientCounterCacheKey()) > 1;
     }

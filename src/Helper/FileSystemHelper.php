@@ -30,6 +30,10 @@ class FileSystemHelper
     {
         $includes = new FilesystemIterator($path);
         foreach ($includes as $include) {
+            if ($include instanceof \SplFileInfo) {
+                $include = $include->getRealPath();
+            }
+
             if (is_dir($include) && !is_link($include)) {
                 $this->recursiveRemoveDir($include);
             } else {

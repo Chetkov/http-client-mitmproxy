@@ -15,6 +15,7 @@ class TypeCastException extends HttpClientMITMException
     public function __construct(string $sourceType, string $targetType, int $code = 0, ?\Throwable $previous = null)
     {
         $message = sprintf('Can not cast type %s to %s', $sourceType, $targetType);
+
         parent::__construct($message, $code, $previous);
     }
 }
