@@ -7,6 +7,7 @@ namespace Chetkov\HttpClientMitmproxy\Communication;
 use Chetkov\HttpClientMitmproxy\Communication\Message\AbstractMessage;
 use Chetkov\HttpClientMitmproxy\MITM\ProxyUID;
 
+// TODO: работает не корректно, нужно разобраться в причинах и исправить.
 class RedisPubSubBasedCommunicationChannel implements CommunicationChannelInterface
 {
     /**
