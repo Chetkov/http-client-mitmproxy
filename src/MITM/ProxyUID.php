@@ -11,7 +11,7 @@ class ProxyUID
     /**
      * @param string $uid
      */
-    protected function __construct(
+    public function __construct(
         private string $uid
     ) {
     }
