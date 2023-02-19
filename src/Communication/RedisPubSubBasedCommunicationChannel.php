@@ -5,16 +5,17 @@ declare(strict_types=1);
 namespace Chetkov\HttpClientMitmproxy\Communication;
 
 use Chetkov\HttpClientMitmproxy\Communication\Message\AbstractMessage;
+use Chetkov\HttpClientMitmproxy\MITM\ProxyUID;
 
 class RedisPubSubBasedCommunicationChannel implements CommunicationChannelInterface
 {
     /**
      * @param \Redis $redis
-     * @param string $proxyUid
+     * @param ProxyUID $proxyUid
      */
     public function __construct(
         private \Redis $redis,
-        private string $proxyUid,
+        private ProxyUID $proxyUid,
     ) {
     }
 

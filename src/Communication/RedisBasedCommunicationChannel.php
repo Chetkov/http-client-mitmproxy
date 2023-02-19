@@ -6,6 +6,7 @@ namespace Chetkov\HttpClientMitmproxy\Communication;
 
 use Chetkov\HttpClientMitmproxy\Communication\Message\AbstractMessage;
 use Chetkov\HttpClientMitmproxy\Exception\PublishersNotFoundException;
+use Chetkov\HttpClientMitmproxy\MITM\ProxyUID;
 
 class RedisBasedCommunicationChannel implements CommunicationChannelInterface
 {
@@ -13,13 +14,13 @@ class RedisBasedCommunicationChannel implements CommunicationChannelInterface
 
     /**
      * @param \Redis $redis
-     * @param string $proxyUid
+     * @param ProxyUID $proxyUid
      *
      * @throws \RedisException
      */
     public function __construct(
         private \Redis $redis,
-        private string $proxyUid,
+        private ProxyUID $proxyUid,
     ) {
         $this->messageCounter = $this->getLastSharedCounterValue();
         $this->redis->incr($this->getClientCounterCacheKey());

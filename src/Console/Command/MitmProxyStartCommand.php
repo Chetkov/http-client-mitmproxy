@@ -8,6 +8,7 @@ use Chetkov\HttpClientMitmproxy\DefaultFactory;
 use Chetkov\HttpClientMitmproxy\Enum\AppMode;
 use Chetkov\HttpClientMitmproxy\Enum\Editor;
 use Chetkov\HttpClientMitmproxy\Enum\Format;
+use Chetkov\HttpClientMitmproxy\MITM\ProxyUID;
 use Chetkov\HttpClientMitmproxy\MitmProxyFactoryInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -55,8 +56,6 @@ class MitmProxyStartCommand extends MitmProxyCommand
         $io = new SymfonyStyle($input, $output);
 
         try {
-            $proxyUid = md5(uniqid((string) getmypid(), true));
-
             $tempDir = $input->getOption('temp-dir');
 
             if ($configPath = $input->getOption('config')) {
@@ -76,7 +75,7 @@ class MitmProxyStartCommand extends MitmProxyCommand
                 $editor = Editor::fromValue($editor);
             }
 
-            $proxyClient = $this->factory->createProxyClient($proxyUid, $tempDir);
+            $proxyClient = $this->factory->createProxyClient(ProxyUID::create(), $tempDir);
             $this->signalsHandler = \Closure::fromCallable(function () use ($proxyClient) {
                 $proxyClient->stop();
                 exit(0);

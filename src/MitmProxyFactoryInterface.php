@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Chetkov\HttpClientMitmproxy;
 
 use Chetkov\HttpClientMitmproxy\MITM\ProxyClient;
+use Chetkov\HttpClientMitmproxy\MITM\ProxyUID;
 use Psr\Http\Client\ClientInterface;
 
 interface MitmProxyFactoryInterface
@@ -17,18 +18,18 @@ interface MitmProxyFactoryInterface
     public function reconfigure(array $config): void;
 
     /**
-     * @param string $proxyUid
+     * @param ProxyUID $proxyUid
      * @param string $tempDir
      *
      * @return ProxyClient
      */
-    public function createProxyClient(string $proxyUid, string $tempDir): ProxyClient;
+    public function createProxyClient(ProxyUID $proxyUid, string $tempDir): ProxyClient;
 
     /**
-     * @param string $proxyUid
+     * @param ProxyUID $proxyUid
      * @param ClientInterface $client
      *
      * @return ClientInterface
      */
-    public function createHttpClientDecorator(string $proxyUid, ClientInterface $client): ClientInterface;
+    public function createHttpClientDecorator(ProxyUID $proxyUid, ClientInterface $client): ClientInterface;
 }

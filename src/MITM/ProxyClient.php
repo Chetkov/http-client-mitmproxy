@@ -31,7 +31,7 @@ class ProxyClient
      * @param CommunicationChannelInterface $communicationChannel
      * @param EditorInterface $editor
      * @param ArrayHelper $arrayHelper
-     * @param string $proxyUid
+     * @param ProxyUID $proxyUid
      */
     public function __construct(
         private ConsoleIOInterface $io,
@@ -39,7 +39,7 @@ class ProxyClient
         private CommunicationChannelInterface $communicationChannel,
         private EditorInterface $editor,
         private ArrayHelper $arrayHelper,
-        private string $proxyUid,
+        private ProxyUID $proxyUid,
     ) {
     }
 
@@ -100,10 +100,11 @@ class ProxyClient
      */
     private function showInstructions(AppMode $appMode): void
     {
+        $uidVariableName = ProxyUID::VAR_NAME;
         $info = "ProxyUID: $this->proxyUid" . PHP_EOL . PHP_EOL;
         $info .= match (true) {
-            $appMode->isCli() => "Set values to env variables:\n\n`export MITM_PROXY_UID=$this->proxyUid && YOUR_COMMAND`",
-            $appMode->isWeb() => "Add values to get-parameters:\n\n`YOUR_URL?MITM_PROXY_UID=$this->proxyUid`",
+            $appMode->isCli() => "Set values to env variables:\n\n`export $uidVariableName=$this->proxyUid && YOUR_COMMAND`",
+            $appMode->isWeb() => "Add values to get-parameters:\n\n`YOUR_URL?$uidVariableName=$this->proxyUid`",
             default => throw new NotImplementedException(),
         };
         $this->io->warning($info);

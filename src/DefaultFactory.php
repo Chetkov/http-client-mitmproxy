@@ -16,6 +16,7 @@ use Chetkov\HttpClientMitmproxy\Helper\ArrayHelper;
 use Chetkov\HttpClientMitmproxy\Helper\FileSystemHelper;
 use Chetkov\HttpClientMitmproxy\MITM\DataModifier\RealtimeDataModifier;
 use Chetkov\HttpClientMitmproxy\MITM\ProxyClient;
+use Chetkov\HttpClientMitmproxy\MITM\ProxyUID;
 use Chetkov\HttpClientMitmproxy\MITM\PsrClientMitmDecorator;
 use Psr\Http\Client\ClientInterface;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -41,14 +42,11 @@ class DefaultFactory implements MitmProxyFactoryInterface
     }
 
     /**
-     * @param string $proxyUid
-     * @param string $tempDir
-     *
-     * @return ProxyClient
+     * @inheritDoc
      *
      * @throws \RedisException
      */
-    public function createProxyClient(string $proxyUid, string $tempDir): ProxyClient
+    public function createProxyClient(ProxyUID $proxyUid, string $tempDir): ProxyClient
     {
         $tempDir = "$tempDir/$proxyUid";
 
@@ -63,14 +61,11 @@ class DefaultFactory implements MitmProxyFactoryInterface
     }
 
     /**
-     * @param string $proxyUid
-     * @param ClientInterface $client
-     *
-     * @return ClientInterface
+     * @inheritDoc
      *
      * @throws \RedisException
      */
-    public function createHttpClientDecorator(string $proxyUid, ClientInterface $client): ClientInterface
+    public function createHttpClientDecorator(ProxyUID $proxyUid, ClientInterface $client): ClientInterface
     {
         return new PsrClientMitmDecorator(
             new RealtimeDataModifier(
@@ -84,13 +79,13 @@ class DefaultFactory implements MitmProxyFactoryInterface
     }
 
     /**
-     * @param string $proxyUid
+     * @param ProxyUID $proxyUid
      *
      * @return CommunicationChannelInterface
      *
      * @throws \RedisException
      */
-    protected function createCommunicationChannel(string $proxyUid): CommunicationChannelInterface
+    protected function createCommunicationChannel(ProxyUID $proxyUid): CommunicationChannelInterface
     {
         $redisConfig = $this->config['redis'];
 
